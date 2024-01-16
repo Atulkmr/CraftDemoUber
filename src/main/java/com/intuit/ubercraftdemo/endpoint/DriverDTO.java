@@ -1,5 +1,6 @@
 package com.intuit.ubercraftdemo.endpoint;
 
+import com.intuit.ubercraftdemo.model.Vehicle.VehicleColour;
 import java.time.LocalDate;
 import lombok.Data;
 
@@ -37,8 +38,8 @@ public class DriverDTO {
 		private String registrationNumber;
 		private String make;
 		private String model;
-		private int year;
-		private String colour;
+		private Integer year;
+		private VehicleColour colour;
 	}
 
 	@Data

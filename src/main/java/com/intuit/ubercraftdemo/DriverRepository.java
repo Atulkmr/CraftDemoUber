@@ -1,8 +1,10 @@
 package com.intuit.ubercraftdemo;
 
 import com.intuit.ubercraftdemo.model.Driver;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
 
-public interface DriverRepository extends JpaRepository<Driver, Long> {
+@Repository
+public interface DriverRepository extends CrudRepository<Driver, Integer> {
 
 }

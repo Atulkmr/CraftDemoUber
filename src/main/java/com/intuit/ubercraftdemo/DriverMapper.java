@@ -1,7 +1,9 @@
 package com.intuit.ubercraftdemo;
 
 import com.intuit.ubercraftdemo.endpoint.DriverDTO;
+import com.intuit.ubercraftdemo.endpoint.DriverDTO.VehicleDTO;
 import com.intuit.ubercraftdemo.model.Driver;
+import com.intuit.ubercraftdemo.model.Vehicle;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -11,31 +13,25 @@ public interface DriverMapper {
 	@Mapping(target = "drivingLicenseExpiryDate", source = "drivingLicense.expiryDate")
 	@Mapping(target = "drivingLicenseNumber", source = "drivingLicense.number")
 	@Mapping(target = "drivingLicenseIssuingAuthority", source = "drivingLicense.issuingAuthority")
-	@Mapping(target = "vehicleMake", source = "vehicle.make")
-	@Mapping(target = "vehicleModel", source = "vehicle.model")
-	@Mapping(target = "vehicleYear", source = "vehicle.year")
-	@Mapping(target = "vehicleColour", source = "vehicle.colour")
 	@Mapping(target = "vehicleRegistrationNumber", source = "vehicle.registrationNumber")
-	@Mapping(target = "mailingAddressStreet", source = "mailingAddress.street")
-	@Mapping(target = "mailingAddressCity", source = "mailingAddress.city")
-	@Mapping(target = "mailingAddressState", source = "mailingAddress.state")
-	@Mapping(target = "mailingAddressCountry", source = "mailingAddress.country")
-	@Mapping(target = "mailingAddressPostalCode", source = "mailingAddress.postalCode")
+	@Mapping(target = "mailingStreet", source = "mailingAddress.street")
+	@Mapping(target = "mailingCity", source = "mailingAddress.city")
+	@Mapping(target = "mailingState", source = "mailingAddress.state")
+	@Mapping(target = "mailingCountry", source = "mailingAddress.country")
+	@Mapping(target = "mailingPostalCode", source = "mailingAddress.postalCode")
 	Driver toEntity(DriverDTO driverDTO);
+
+	Vehicle toEntity(VehicleDTO vehicleDTO);
 
 
 	@Mapping(source = "drivingLicenseExpiryDate", target = "drivingLicense.expiryDate")
 	@Mapping(source = "drivingLicenseNumber", target = "drivingLicense.number")
 	@Mapping(source = "drivingLicenseIssuingAuthority", target = "drivingLicense.issuingAuthority")
-	@Mapping(source = "vehicleMake", target = "vehicle.make")
-	@Mapping(source = "vehicleModel", target = "vehicle.model")
-	@Mapping(source = "vehicleYear", target = "vehicle.year")
-	@Mapping(source = "vehicleColour", target = "vehicle.colour")
 	@Mapping(source = "vehicleRegistrationNumber", target = "vehicle.registrationNumber")
-	@Mapping(source = "mailingAddressStreet", target = "mailingAddress.street")
-	@Mapping(source = "mailingAddressCity", target = "mailingAddress.city")
-	@Mapping(source = "mailingAddressState", target = "mailingAddress.state")
-	@Mapping(source = "mailingAddressCountry", target = "mailingAddress.country")
-	@Mapping(source = "mailingAddressPostalCode", target = "mailingAddress.postalCode")
+	@Mapping(source = "mailingStreet", target = "mailingAddress.street")
+	@Mapping(source = "mailingCity", target = "mailingAddress.city")
+	@Mapping(source = "mailingState", target = "mailingAddress.state")
+	@Mapping(source = "mailingCountry", target = "mailingAddress.country")
+	@Mapping(source = "mailingPostalCode", target = "mailingAddress.postalCode")
 	DriverDTO toDto(Driver driver);
 }
