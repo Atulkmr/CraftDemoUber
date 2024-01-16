@@ -1,6 +1,7 @@
 package com.intuit.ubercraftdemo;
 
 import com.intuit.ubercraftdemo.endpoint.DriverDTO;
+import com.intuit.ubercraftdemo.model.Driver;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

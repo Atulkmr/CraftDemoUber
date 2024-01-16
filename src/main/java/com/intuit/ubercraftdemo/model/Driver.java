@@ -1,4 +1,4 @@
-package com.intuit.ubercraftdemo;
+package com.intuit.ubercraftdemo.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
