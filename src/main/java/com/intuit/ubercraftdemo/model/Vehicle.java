@@ -15,6 +15,7 @@ public class Vehicle {
 	private Integer year;
 	private VehicleColour colour;
 	private Integer occupancy;
+	private Integer defaultProductCategoryId;
 
 	public enum VehicleColour {
 		Red, White, Black, Grey, Blue

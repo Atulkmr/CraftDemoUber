@@ -4,14 +4,11 @@ import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
-
+@Table(name = "budget_edition_s3")
 @Data
-@Table(name = "onboarding_process_template")
-public class OnboardingProcessTemplate {
+public class BudgetEditionS3 {
 
 	@Id
 	private Integer id;
-	private Integer productCategoryId;
-	private String processName;
-	private Integer operationMarketId;
+	private byte[] fileContent;
 }
