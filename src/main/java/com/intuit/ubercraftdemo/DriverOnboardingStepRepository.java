@@ -16,7 +16,9 @@ public interface DriverOnboardingStepRepository extends
 	Optional<DriverOnboardingStep> findByDriverIdAndOnboardingStepTemplateId(
 		Integer driverId, Integer onboardingStepTemplateId);
 
-	@Modifying
-	@Query("SELECT * FROM driver_onboarding_step WHERE onboarding_step_template_id IN :onboardingStepTemplateId AND status = :status ORDER BY created_date LIMIT 1 FOR UPDATE")
+	Optional<DriverOnboardingStep> findByStatusAndAssignedAuditorUsername(StepStatus status, String username);
+
+	@Query("SELECT * FROM driver_onboarding_step WHERE onboarding_step_template_id = :onboardingStepTemplateId AND status = :status ORDER BY created_date LIMIT 1 FOR UPDATE SKIP LOCKED")
 	Optional<DriverOnboardingStep> findOldestDriverOnboardingStepWaitingForAssignment(List<Integer> onboardingStepTemplateId, StepStatus status);
+
 }
