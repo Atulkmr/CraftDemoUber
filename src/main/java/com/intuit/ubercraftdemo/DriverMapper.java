@@ -1,7 +1,7 @@
 package com.intuit.ubercraftdemo;
 
-import com.intuit.ubercraftdemo.endpoint.DriverDTO;
-import com.intuit.ubercraftdemo.endpoint.DriverDTO.VehicleDTO;
+import com.intuit.ubercraftdemo.endpoint.driver.DriverDTO;
+import com.intuit.ubercraftdemo.endpoint.driver.DriverDTO.VehicleDTO;
 import com.intuit.ubercraftdemo.model.Driver;
 import com.intuit.ubercraftdemo.model.Vehicle;
 import org.mapstruct.Mapper;

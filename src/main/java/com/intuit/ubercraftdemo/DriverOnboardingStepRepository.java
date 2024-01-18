@@ -1,6 +1,11 @@
 package com.intuit.ubercraftdemo;
 
 import com.intuit.ubercraftdemo.model.DriverOnboardingStep;
+import com.intuit.ubercraftdemo.model.StepStatus;
+import java.util.List;
+import java.util.Optional;
+import org.springframework.data.jdbc.repository.query.Modifying;
+import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
@@ -8,4 +13,10 @@ import org.springframework.stereotype.Repository;
 public interface DriverOnboardingStepRepository extends
 	CrudRepository<DriverOnboardingStep, Integer> {
 
+	Optional<DriverOnboardingStep> findByDriverIdAndOnboardingStepTemplateId(
+		Integer driverId, Integer onboardingStepTemplateId);
+
+	@Modifying
+	@Query("SELECT * FROM driver_onboarding_step WHERE onboarding_step_template_id IN :onboardingStepTemplateId AND status = :status ORDER BY created_date LIMIT 1 FOR UPDATE")
+	Optional<DriverOnboardingStep> findOldestDriverOnboardingStepWaitingForAssignment(List<Integer> onboardingStepTemplateId, StepStatus status);
 }

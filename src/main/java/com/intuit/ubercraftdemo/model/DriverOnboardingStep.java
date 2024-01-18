@@ -16,6 +16,8 @@ public class DriverOnboardingStep {
 	//	private Integer operatingMarketId;
 	private Integer sequenceNumber;
 	private StepStatus status;
+	//TODO Should this username field be changed to a FK to User / Auditor table once it's there?
+	private String assignedAuditorUsername;
 	private String attachments;
 	private Date createdDate;
 	private Date lastModifiedDate;

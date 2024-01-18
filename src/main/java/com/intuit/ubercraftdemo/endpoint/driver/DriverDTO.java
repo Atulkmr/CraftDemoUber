@@ -1,4 +1,4 @@
-package com.intuit.ubercraftdemo.endpoint;
+package com.intuit.ubercraftdemo.endpoint.driver;
 
 import com.intuit.ubercraftdemo.model.Vehicle.VehicleColour;
 import java.time.LocalDate;

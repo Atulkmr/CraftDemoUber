@@ -14,4 +14,7 @@ public interface VehicleRepository extends CrudRepository<Vehicle, Integer> {
 	Optional<Vehicle> findByMakeModelYearColour(String make, String model, Integer year,
 		VehicleColour colour);
 
+	//TODO replace the above method with this.
+	Optional<Vehicle> findByMakeAndModelAndYearAndColour(String make, String model, Integer year, VehicleColour colour);
+
 }
