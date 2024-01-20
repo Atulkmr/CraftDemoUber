@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.intuit.ubercraftdemo.AuditorOnboardingStepRepository;
 import com.intuit.ubercraftdemo.BudgetEditionS3Repository;
 import com.intuit.ubercraftdemo.DriverOnboardingStepRepository;
+import com.intuit.ubercraftdemo.advice.CaseNotAssignedException;
 import com.intuit.ubercraftdemo.model.AuditorOnboardingStep;
 import com.intuit.ubercraftdemo.model.BudgetEditionS3;
 import com.intuit.ubercraftdemo.model.DriverOnboardingStep;
@@ -29,8 +30,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(path = "/auditor/case")
 public class AuditController {
 
-	//TODO the auditor username is hardcoded right now. Ideally it should be obtained from the auth token.
+	//TODO this can be obtained from the auth jwt
 	private final static String auditorUsername = "kyc-auditor@gmail.com";
+	//TODO the auditor username is hardcoded right now. Ideally it should be obtained from the auth token.
 	private final DriverOnboardingStepRepository driverOnboardingStepRepository;
 	private final AuditorOnboardingStepRepository auditorOnboardingStepRepository;
 	private final BudgetEditionS3Repository budgetEditionS3Repository;
@@ -69,14 +71,9 @@ public class AuditController {
 	@GetMapping(value = "/document/{documentName}", produces = MediaType.APPLICATION_PDF_VALUE)
 	public ResponseEntity<Resource> getAssignedCaseDocument(
 		@PathVariable("documentName") String requestedDocumentName) {
-		Optional<DriverOnboardingStep> assignedDriverOnboardingStep = driverOnboardingStepRepository.findByAssignedAuditorUsernameAndStatus(
-			auditorUsername, StepStatus.Processing);
-		if (assignedDriverOnboardingStep.isEmpty()) {
-			//TODO Exception advice for no case assigned.
-			throw new RuntimeException();
-		}
+		DriverOnboardingStep assignedDriverOnboardingStep = fetchAssignedAuditCase(auditorUsername);
 		Map<String, String> fileNameToS3Id = gson.fromJson(
-			assignedDriverOnboardingStep.get().getAttachments(), Map.class);
+			assignedDriverOnboardingStep.getAttachments(), Map.class);
 		if (fileNameToS3Id.containsKey(requestedDocumentName)) {
 			Optional<BudgetEditionS3> requestedDocument = budgetEditionS3Repository.findById(
 				Integer.valueOf(fileNameToS3Id.get(requestedDocumentName)));
@@ -90,11 +87,25 @@ public class AuditController {
 		throw new RuntimeException();
 	}
 
+	//TODO Determine when to throw declared exception vs extensions of runtime exception.
+
 	public ResponseEntity<String> updateAssignedAuditCaseStatusToApproved() {
+		DriverOnboardingStep assignedDriverOnboardingStep = fetchAssignedAuditCase(auditorUsername);
+		assignedDriverOnboardingStep.setStatus(StepStatus.Completed);
 		return null;
 	}
 
 	public ResponseEntity<String> updateAssignedAuditCaseStatusToRejected() {
+		DriverOnboardingStep assignedDriverOnboardingStep = fetchAssignedAuditCase(auditorUsername);
 		return null;
+	}
+
+	private DriverOnboardingStep fetchAssignedAuditCase(String auditorUsername) {
+		Optional<DriverOnboardingStep> assignedDriverOnboardingStep = driverOnboardingStepRepository.findByAssignedAuditorUsernameAndStatus(
+			auditorUsername, StepStatus.Processing);
+		if (assignedDriverOnboardingStep.isEmpty()) {
+			throw new CaseNotAssignedException();
+		}
+		return assignedDriverOnboardingStep.get();
 	}
 }

@@ -35,7 +35,8 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 		MaxUploadSizeExceededException ex, HttpHeaders headers, HttpStatusCode status,
 		WebRequest request) {
 		ApiError apiError = new ApiError(HttpStatus.PAYLOAD_TOO_LARGE, ex);
-		apiError.setMessage(String.format("File size exceeds maximum allowed limit of %d MB.", multipartProperties.getMaxFileSize().toMegabytes()));
+		apiError.setMessage(String.format("File size exceeds maximum allowed limit of %d MB.",
+			multipartProperties.getMaxFileSize().toMegabytes()));
 		return buildResponseEntity(apiError);
 	}
 
@@ -47,6 +48,13 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 		return buildResponseEntity(apiError);
 	}
 
+	@ExceptionHandler(CaseNotAssignedException.class)
+	public ResponseEntity<Object> handleCaseNotAssignedException() {
+		ApiError apiError = new ApiError(HttpStatus.NOT_FOUND);
+		apiError.setMessage(
+			"You don't have an assigned case. Please use the /assign API to get a new case.");
+		return buildResponseEntity(apiError);
+	}
 
 	@ExceptionHandler(InvalidFileTypeException.class)
 	public ResponseEntity<Object> handleInvalidFileTypeSpecified(InvalidFileTypeException ex) {
