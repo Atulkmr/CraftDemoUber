@@ -1,4 +1,4 @@
-package com.intuit.ubercraftdemo;
+package com.intuit.ubercraftdemo.model.repository;
 
 import com.intuit.ubercraftdemo.model.Driver;
 import org.springframework.data.repository.CrudRepository;

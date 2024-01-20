@@ -1,4 +1,4 @@
-package com.intuit.ubercraftdemo.advice;
+package com.intuit.ubercraftdemo.exception;
 
 import com.intuit.ubercraftdemo.model.DriverOnboardingStep;
 import com.intuit.ubercraftdemo.model.StepStatus;

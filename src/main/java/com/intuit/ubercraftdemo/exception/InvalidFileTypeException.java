@@ -1,4 +1,4 @@
-package com.intuit.ubercraftdemo.advice;
+package com.intuit.ubercraftdemo.exception;
 
 import java.util.Collection;
 

@@ -1,17 +1,17 @@
 package com.intuit.ubercraftdemo.endpoint.driver;
 
 import com.google.gson.Gson;
-import com.intuit.ubercraftdemo.BudgetEditionS3Repository;
+import com.intuit.ubercraftdemo.model.repository.BudgetEditionS3Repository;
 import com.intuit.ubercraftdemo.DriverMapper;
-import com.intuit.ubercraftdemo.DriverOnboardingProcessRepository;
-import com.intuit.ubercraftdemo.DriverOnboardingStepRepository;
-import com.intuit.ubercraftdemo.DriverRepository;
-import com.intuit.ubercraftdemo.OnboardingProcessTemplateRepository;
-import com.intuit.ubercraftdemo.OnboardingStepTemplateRepository;
-import com.intuit.ubercraftdemo.OperationMarketRepository;
-import com.intuit.ubercraftdemo.VehicleRepository;
-import com.intuit.ubercraftdemo.advice.InvalidFileTypeException;
-import com.intuit.ubercraftdemo.advice.InvalidStepModificationException;
+import com.intuit.ubercraftdemo.model.repository.DriverOnboardingProcessRepository;
+import com.intuit.ubercraftdemo.model.repository.DriverOnboardingStepRepository;
+import com.intuit.ubercraftdemo.model.repository.DriverRepository;
+import com.intuit.ubercraftdemo.model.repository.OnboardingProcessTemplateRepository;
+import com.intuit.ubercraftdemo.model.repository.OnboardingStepTemplateRepository;
+import com.intuit.ubercraftdemo.model.repository.OperationMarketRepository;
+import com.intuit.ubercraftdemo.model.repository.VehicleRepository;
+import com.intuit.ubercraftdemo.exception.InvalidFileTypeException;
+import com.intuit.ubercraftdemo.exception.InvalidStepModificationException;
 import com.intuit.ubercraftdemo.model.BudgetEditionS3;
 import com.intuit.ubercraftdemo.model.Driver;
 import com.intuit.ubercraftdemo.model.DriverOnboardingProcess;

@@ -1,5 +1,9 @@
-package com.intuit.ubercraftdemo.advice;
+package com.intuit.ubercraftdemo.exception.advice;
 
+import com.intuit.ubercraftdemo.exception.InvalidFileTypeException;
+import com.intuit.ubercraftdemo.exception.InvalidStepModificationException;
+import com.intuit.ubercraftdemo.exception.NoCaseAssignedException;
+import java.nio.file.NoSuchFileException;
 import lombok.AllArgsConstructor;
 import org.springframework.boot.autoconfigure.web.servlet.MultipartProperties;
 import org.springframework.core.Ordered;
@@ -48,7 +52,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 		return buildResponseEntity(apiError);
 	}
 
-	@ExceptionHandler(CaseNotAssignedException.class)
+	@ExceptionHandler(NoCaseAssignedException.class)
 	public ResponseEntity<Object> handleCaseNotAssignedException() {
 		ApiError apiError = new ApiError(HttpStatus.NOT_FOUND);
 		apiError.setMessage(
@@ -56,6 +60,12 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 		return buildResponseEntity(apiError);
 	}
 
+	@ExceptionHandler(NoSuchFileException.class)
+	public ResponseEntity<Object> handleInvalidFileTypeSpecified(NoSuchFileException ex) {
+		ApiError apiError = new ApiError(HttpStatus.NOT_FOUND);
+		apiError.setMessage(ex.getMessage());
+		return buildResponseEntity(apiError);
+	}
 	@ExceptionHandler(InvalidFileTypeException.class)
 	public ResponseEntity<Object> handleInvalidFileTypeSpecified(InvalidFileTypeException ex) {
 		ApiError apiError = new ApiError(HttpStatus.UNSUPPORTED_MEDIA_TYPE);

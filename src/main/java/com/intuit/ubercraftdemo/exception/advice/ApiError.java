@@ -1,4 +1,4 @@
-package com.intuit.ubercraftdemo.advice;
+package com.intuit.ubercraftdemo.exception.advice;
 
 import java.time.LocalDateTime;
 import lombok.Getter;
