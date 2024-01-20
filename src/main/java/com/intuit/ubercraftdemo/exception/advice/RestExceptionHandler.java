@@ -1,5 +1,6 @@
 package com.intuit.ubercraftdemo.exception.advice;
 
+import com.intuit.ubercraftdemo.exception.InvalidDriverStatusTransitionException;
 import com.intuit.ubercraftdemo.exception.InvalidFileTypeException;
 import com.intuit.ubercraftdemo.exception.InvalidStepModificationException;
 import com.intuit.ubercraftdemo.exception.NoCaseAssignedException;
@@ -53,15 +54,14 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 	}
 
 	@ExceptionHandler(NoCaseAssignedException.class)
-	public ResponseEntity<Object> handleCaseNotAssignedException() {
+	public ResponseEntity<Object> handleCaseNotAssignedException(NoCaseAssignedException ex) {
 		ApiError apiError = new ApiError(HttpStatus.NOT_FOUND);
-		apiError.setMessage(
-			"You don't have an assigned case. Please use the /assign API to get a new case.");
+		apiError.setMessage(ex.getMessage());
 		return buildResponseEntity(apiError);
 	}
 
 	@ExceptionHandler(NoSuchFileException.class)
-	public ResponseEntity<Object> handleInvalidFileTypeSpecified(NoSuchFileException ex) {
+	public ResponseEntity<Object> handleNoSuchFileException(NoSuchFileException ex) {
 		ApiError apiError = new ApiError(HttpStatus.NOT_FOUND);
 		apiError.setMessage(ex.getMessage());
 		return buildResponseEntity(apiError);
@@ -73,10 +73,14 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 		return buildResponseEntity(apiError);
 	}
 
+	@ExceptionHandler(InvalidDriverStatusTransitionException.class)
+	public ResponseEntity<Object> handleInvalidDriverStatusTransition(InvalidFileTypeException ex) {
+		ApiError apiError = new ApiError(HttpStatus.METHOD_NOT_ALLOWED);
+		apiError.setMessage(ex.getMessage());
+		return buildResponseEntity(apiError);
+	}
+
 	private ResponseEntity<Object> buildResponseEntity(ApiError apiError) {
 		return new ResponseEntity<>(apiError, apiError.getStatus());
 	}
-
-	//other exception handlers below
-
 }

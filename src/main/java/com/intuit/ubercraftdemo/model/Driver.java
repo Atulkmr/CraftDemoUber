@@ -13,6 +13,7 @@ public class Driver {
 	private Integer id;
 	private String username;
 	private String name;
+	private DriverStatus status;
 	private BloodGroup bloodGroup;
 	private LocalDate birthdate;
 	private Integer operationMarketId;
@@ -29,5 +30,9 @@ public class Driver {
 
 	public enum BloodGroup {
 		A_POSITIVE, B_POSITIVE, AB_POSITIVE, AB_NEGATIVE, A_NEGATIVE, B_NEGATIVE, O_POSITIVE, O_NEGATIVE
+	}
+
+	public enum DriverStatus {
+		ONBOARDING, READY_TO_WORK, WORKING;
 	}
 }

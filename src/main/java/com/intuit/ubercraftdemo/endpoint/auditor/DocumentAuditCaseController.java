@@ -63,7 +63,7 @@ public class DocumentAuditCaseController{
 		return ResponseEntity.ok("You have been assigned this case" + caseToAssign.get().getId());
 	}
 
-	@GetMapping("/list")
+	@GetMapping("/show")
 	public ResponseEntity<DriverOnboardingStep> getAssignedAuditCase() {
 		Optional<DriverOnboardingStep> assignedDriverOnboardingStep = driverOnboardingStepRepository.findByAssignedAuditorUsernameAndStatus(
 			auditorUsername, StepStatus.Processing);

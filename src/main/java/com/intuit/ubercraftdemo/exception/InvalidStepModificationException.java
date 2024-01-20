@@ -4,7 +4,7 @@ import com.intuit.ubercraftdemo.model.DriverOnboardingStep;
 import com.intuit.ubercraftdemo.model.StepStatus;
 
 /**
- * This exception is thrown when API corresponding to a currently inactive step is invoked.
+ * This exception is thrown when API corresponding to a currently inactive step (for that API) is invoked.
  */
 public class InvalidStepModificationException extends IllegalStateException {
 
