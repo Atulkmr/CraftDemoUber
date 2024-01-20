@@ -1,5 +1,6 @@
 package com.intuit.ubercraftdemo;
 
+import com.intuit.ubercraftdemo.model.Driver;
 import com.intuit.ubercraftdemo.model.DriverOnboardingStep;
 import com.intuit.ubercraftdemo.model.StepStatus;
 import java.util.List;
@@ -13,10 +14,9 @@ import org.springframework.stereotype.Repository;
 public interface DriverOnboardingStepRepository extends
 	CrudRepository<DriverOnboardingStep, Integer> {
 
-	Optional<DriverOnboardingStep> findByDriverIdAndOnboardingStepTemplateId(
-		Integer driverId, Integer onboardingStepTemplateId);
+	List<DriverOnboardingStep> findAllByDriverId(Integer driverId);
 
-	Optional<DriverOnboardingStep> findByStatusAndAssignedAuditorUsername(StepStatus status, String username);
+	Optional<DriverOnboardingStep> findByAssignedAuditorUsernameAndStatus(String username, StepStatus status);
 
 	@Query("SELECT * FROM driver_onboarding_step WHERE onboarding_step_template_id = :onboardingStepTemplateId AND status = :status ORDER BY created_date LIMIT 1 FOR UPDATE SKIP LOCKED")
 	Optional<DriverOnboardingStep> findOldestDriverOnboardingStepWaitingForAssignment(List<Integer> onboardingStepTemplateId, StepStatus status);

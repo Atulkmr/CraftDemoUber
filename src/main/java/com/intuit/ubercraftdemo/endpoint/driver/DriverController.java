@@ -10,6 +10,8 @@ import com.intuit.ubercraftdemo.OnboardingProcessTemplateRepository;
 import com.intuit.ubercraftdemo.OnboardingStepTemplateRepository;
 import com.intuit.ubercraftdemo.OperationMarketRepository;
 import com.intuit.ubercraftdemo.VehicleRepository;
+import com.intuit.ubercraftdemo.advice.InvalidFileTypeException;
+import com.intuit.ubercraftdemo.advice.InvalidStepModificationException;
 import com.intuit.ubercraftdemo.model.BudgetEditionS3;
 import com.intuit.ubercraftdemo.model.Driver;
 import com.intuit.ubercraftdemo.model.DriverOnboardingProcess;
@@ -27,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,7 +44,9 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping(path = "/driver/onboard")
 @AllArgsConstructor
+@Slf4j
 public class DriverController {
+
 
 	private DriverRepository driverRepository;
 	private VehicleRepository vehicleRepository;
@@ -56,6 +61,7 @@ public class DriverController {
 	@PostMapping("/register")
 	@Transactional
 	public ResponseEntity<Driver> saveEntity(@RequestBody DriverDTO driverRegistration) {
+		log.trace("Beginning of save for Driver record");
 		Optional<Vehicle> vehicle = vehicleRepository.findByMakeModelYearColour(
 			driverRegistration.getVehicle().getMake(), driverRegistration.getVehicle().getModel(),
 			driverRegistration.getVehicle().getYear(), driverRegistration.getVehicle().getColour());
@@ -79,8 +85,8 @@ public class DriverController {
 		driverOnboardingProcess.setOnboardingProcessTemplateId(
 			onboardingProcessTemplate.get().getId());
 		driverOnboardingProcess.setProductCategoryId(vehicle.get().getDefaultProductCategoryId());
-		driverOnboardingProcess.setProcessName(driver.getUsername() +
-			onboardingProcessTemplate.get().getProcessName());
+		driverOnboardingProcess.setProcessName(
+			driver.getUsername() + onboardingProcessTemplate.get().getProcessName());
 		driverOnboardingProcess.setCurrentStepNumber(1);
 		driverOnboardingProcess = driverOnboardingProcessRepository.save(driverOnboardingProcess);
 
@@ -92,7 +98,7 @@ public class DriverController {
 			driverOnboardingStep.setStepName(onboardingStepTemplate.getStepName());
 			driverOnboardingStep.setAttachments(onboardingStepTemplate.getAttachments());
 			driverOnboardingStep.setOnboardingStepTemplateId(onboardingStepTemplate.getId());
-			driverOnboardingStep.setSequenceNumber(onboardingStepTemplate.getSequenceNumber());
+			driverOnboardingStep.setStepNumber(onboardingStepTemplate.getSequenceNumber());
 			driverOnboardingStep.setStatus(onboardingStepTemplate.getInitialStatus());
 			driverOnboardingStep.setCreatedDate(new Date());
 			driverOnboardingStep.setLastModifiedDate(new Date());
@@ -108,24 +114,51 @@ public class DriverController {
 	@PostMapping(value = "/{driverId}/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	//TODO Remove this path variable by obtaining the driverId from the SecurityContext.
 	public ResponseEntity<Map<String, String>> uploadDocuments(
-		@PathVariable("driverId") Integer driverId,
-		@RequestPart("aadhar") MultipartFile aadhar,
+		@PathVariable("driverId") Integer driverId, @RequestPart("aadhar") MultipartFile aadhar,
 		@RequestPart("drivingLicense") MultipartFile drivingLicense) throws IOException {
 
-		//TODO check file type and implement controller advice for the same validation.
+		List<String> whitelistedFileTypes = List.of(
+			MediaType.APPLICATION_PDF_VALUE,
+			MediaType.IMAGE_JPEG_VALUE,
+			MediaType.IMAGE_PNG_VALUE);
 
-		Optional<DriverOnboardingStep> documentUploadOnboardingStep = driverOnboardingStepRepository.findByDriverIdAndOnboardingStepTemplateId(
-			driverId, 1);
+		checkForWhitelistedMediaType(whitelistedFileTypes, aadhar, drivingLicense);
+		if (!MediaType.APPLICATION_PDF_VALUE.equals(aadhar.getContentType()) ||
+			!MediaType.APPLICATION_PDF_VALUE.equals(drivingLicense.getContentType())) {
+			throw new InvalidFileTypeException(List.of(MediaType.APPLICATION_PDF_VALUE),
+				aadhar.getContentType() != MediaType.APPLICATION_PDF_VALUE ? aadhar.getContentType()
+					: drivingLicense.getContentType());
+		}
+		Optional<DriverOnboardingProcess> driverOnboardingProcess = driverOnboardingProcessRepository.findByDriverId(
+			driverId);
+
+		List<DriverOnboardingStep> driverOnboardingSteps = driverOnboardingStepRepository.findAllByDriverId(
+			driverId);
+		Optional<DriverOnboardingStep> documentUploadOnboardingStep = driverOnboardingSteps.stream()
+			.filter(driverOnboardingStep -> driverOnboardingStep.getOnboardingStepTemplateId() == 1)
+			.findFirst();
+
 		if (documentUploadOnboardingStep.isEmpty()) {
-			//Unexpected exception controller advice
+			//This isn't possible as long as Driver and satellite audit records are created together.
 			throw new RuntimeException();
 		}
-		if (!documentUploadOnboardingStep.get().getStatus().equals(StepStatus.DriverActionNeeded)
-			//&&
-			//TODO check if this is the active step. -> driverOnboardingProcess.currentStepNumber
-		) {
-			//TODO implement controller advice.
-			throw new RuntimeException();
+
+		//If the onboarding process's current step number isn't equal to the step number of document upload step
+		//it means either a prior step is pending, or this step was already completed.
+		if (!documentUploadOnboardingStep.get().getStepNumber()
+			.equals(driverOnboardingProcess.get().getCurrentStepNumber())) {
+			Integer currentStepNumber = driverOnboardingProcess.get().getCurrentStepNumber();
+			DriverOnboardingStep currentlyActiveStep = driverOnboardingSteps.stream()
+				.filter(step -> step.getOnboardingStepTemplateId() == currentStepNumber).findFirst()
+				.get();
+			throw new InvalidStepModificationException(currentlyActiveStep,
+				documentUploadOnboardingStep.get());
+		}
+
+		//If the document upload step's status isn't DriverActionNeeded, then this isn't the driver's turn to upload documents.
+		if (!documentUploadOnboardingStep.get().getStatus().equals(StepStatus.DriverActionNeeded)) {
+			throw new InvalidStepModificationException(
+				documentUploadOnboardingStep.get().getStatus(), StepStatus.DriverActionNeeded);
 		}
 		BudgetEditionS3 aadharFile = new BudgetEditionS3();
 		aadharFile.setFileContent(aadhar.getBytes());
@@ -143,15 +176,24 @@ public class DriverController {
 		Iterable<BudgetEditionS3> uploadedFiles = budgetEditionS3Repository.saveAll(
 			List.of(aadharFile, drivingLicenseFile));
 		Map<String, String> fileNameToFileId = new HashMap<>();
-		uploadedFiles.forEach(
-			file -> {
-				fileNameToFileId.put(file.getName(), file.getOriginalFilename());
-				dosAttachments.put(file.getName(), file.getId().toString());
-			});
+		uploadedFiles.forEach(file -> {
+			fileNameToFileId.put(file.getName(), file.getOriginalFilename());
+			dosAttachments.put(file.getName(), file.getId().toString());
+		});
 		documentUploadOnboardingStep.get().setStatus(StepStatus.WaitingForAuditorAssignment);
 		documentUploadOnboardingStep.get().setAttachments(gson.toJson(dosAttachments));
 		driverOnboardingStepRepository.save(documentUploadOnboardingStep.get());
 
 		return ResponseEntity.ok(fileNameToFileId);
+	}
+
+	private void checkForWhitelistedMediaType(List<String> whitelistedFileTypes,
+		MultipartFile... suppliedFiles) {
+		for (MultipartFile suppliedFile : suppliedFiles) {
+			if (!whitelistedFileTypes.contains(suppliedFile.getContentType())) {
+				throw new InvalidFileTypeException(whitelistedFileTypes,
+					suppliedFile.getContentType());
+			}
+		}
 	}
 }

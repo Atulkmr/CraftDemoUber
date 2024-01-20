@@ -14,7 +14,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -59,8 +57,8 @@ public class AuditController {
 
 	@GetMapping("/list")
 	public ResponseEntity<DriverOnboardingStep> getAssignedAuditCase() {
-		Optional<DriverOnboardingStep> assignedDriverOnboardingStep = driverOnboardingStepRepository.findByStatusAndAssignedAuditorUsername(
-			StepStatus.Processing, auditorUsername);
+		Optional<DriverOnboardingStep> assignedDriverOnboardingStep = driverOnboardingStepRepository.findByAssignedAuditorUsernameAndStatus(
+			auditorUsername, StepStatus.Processing);
 		if (assignedDriverOnboardingStep.isEmpty()) {
 			//TODO Exception advice for no case assigned.
 			throw new RuntimeException();
@@ -69,9 +67,10 @@ public class AuditController {
 	}
 
 	@GetMapping(value = "/document/{documentName}", produces = MediaType.APPLICATION_PDF_VALUE)
-	public ResponseEntity<Resource> getAssignedCaseDocument(@PathVariable("documentName") String requestedDocumentName) {
-		Optional<DriverOnboardingStep> assignedDriverOnboardingStep = driverOnboardingStepRepository.findByStatusAndAssignedAuditorUsername(
-			StepStatus.Processing, auditorUsername);
+	public ResponseEntity<Resource> getAssignedCaseDocument(
+		@PathVariable("documentName") String requestedDocumentName) {
+		Optional<DriverOnboardingStep> assignedDriverOnboardingStep = driverOnboardingStepRepository.findByAssignedAuditorUsernameAndStatus(
+			auditorUsername, StepStatus.Processing);
 		if (assignedDriverOnboardingStep.isEmpty()) {
 			//TODO Exception advice for no case assigned.
 			throw new RuntimeException();
