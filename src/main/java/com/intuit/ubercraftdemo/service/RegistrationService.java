@@ -134,7 +134,8 @@ public class RegistrationService {
                 .equals(driverOnboardingProcess.get().getCurrentStepNumber())) {
             Integer currentStepNumber = driverOnboardingProcess.get().getCurrentStepNumber();
             DriverOnboardingStep currentlyActiveStep = driverOnboardingSteps.stream()
-                    .filter(step -> step.getOnboardingStepTemplateId() == currentStepNumber).findFirst()
+                    .filter(step -> step.getStepNumber() != null && step.getStepNumber().equals(currentStepNumber))
+                    .findFirst()
                     .get();
             log.error("Invalid Step Modification for Driver Id: {}", driverId);
             throw new InvalidStepModificationException(currentlyActiveStep,
@@ -197,6 +198,6 @@ public class RegistrationService {
         driverRepository.save(driver);
 
         //Return the newly set status as a key-value pair.
-        return Map.of("status",  driver.getStatus().toString());
+        return Map.of("status", driver.getStatus().toString());
     }
 }

@@ -2,6 +2,7 @@ package com.intuit.ubercraftdemo.endpoint.driver;
 
 import com.intuit.ubercraftdemo.model.Vehicle.VehicleColour;
 import lombok.Data;
+import lombok.NonNull;
 
 import java.time.LocalDate;
 
