@@ -4,18 +4,8 @@ import com.google.gson.Gson;
 import com.intuit.ubercraftdemo.DriverMapper;
 import com.intuit.ubercraftdemo.exception.InvalidDriverStatusTransitionException;
 import com.intuit.ubercraftdemo.exception.InvalidFileTypeException;
-import com.intuit.ubercraftdemo.exception.InvalidStepModificationException;
-import com.intuit.ubercraftdemo.exception.NoSuchRecordException;
-import com.intuit.ubercraftdemo.model.BudgetEditionS3;
 import com.intuit.ubercraftdemo.model.Driver;
 import com.intuit.ubercraftdemo.model.Driver.DriverStatus;
-import com.intuit.ubercraftdemo.model.DriverOnboardingProcess;
-import com.intuit.ubercraftdemo.model.DriverOnboardingStep;
-import com.intuit.ubercraftdemo.model.OnboardingProcessTemplate;
-import com.intuit.ubercraftdemo.model.OnboardingStepTemplate;
-import com.intuit.ubercraftdemo.model.OperationMarket;
-import com.intuit.ubercraftdemo.model.StepStatus;
-import com.intuit.ubercraftdemo.model.Vehicle;
 import com.intuit.ubercraftdemo.model.repository.BudgetEditionS3Repository;
 import com.intuit.ubercraftdemo.model.repository.DriverOnboardingProcessRepository;
 import com.intuit.ubercraftdemo.model.repository.DriverOnboardingStepRepository;
@@ -26,14 +16,10 @@ import com.intuit.ubercraftdemo.model.repository.OperationMarketRepository;
 import com.intuit.ubercraftdemo.model.repository.VehicleRepository;
 import com.intuit.ubercraftdemo.service.RegistrationService;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.util.Pair;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -66,13 +52,14 @@ public class DriverController {
 	private final RegistrationService registrationService;
 
 	@PostMapping("/onboard/register")
-	public ResponseEntity<RegistrationAcknowledgementDTO> registerAsNewDriver(@RequestBody DriverRegistrationDTO driverRegistration) {
-		RegistrationAcknowledgementDTO acknowledgementDTO = registrationService.createNewDriverAndRelatedOnboardingRecords(driverRegistration);
+	public ResponseEntity<RegistrationAcknowledgementDTO> registerAsNewDriver(
+		@RequestBody DriverRegistrationDTO driverRegistration) {
+		RegistrationAcknowledgementDTO acknowledgementDTO = registrationService.createNewDriverAndRelatedOnboardingRecords(
+			driverRegistration);
 		return ResponseEntity.ok(acknowledgementDTO);
 	}
 
 
-	@Transactional
 	@PostMapping(value = "onboard/{driverId}/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	//TODO Remove this path variable by obtaining the driverId from the SecurityContext.
 	public ResponseEntity<Map<String, String>> uploadDocuments(
@@ -86,61 +73,10 @@ public class DriverController {
 
 		checkForWhitelistedMediaType(whitelistedFileTypes, aadhar, drivingLicense);
 
-		Optional<DriverOnboardingProcess> driverOnboardingProcess = driverOnboardingProcessRepository.findByDriverId(
-			driverId);
+		Map<String, String> documentNameToFileName = registrationService.uploadDocumentsAndUpdateFileIdInOnboardingStep(
+			driverId, aadhar, drivingLicense);
 
-		List<DriverOnboardingStep> driverOnboardingSteps = driverOnboardingStepRepository.findAllByDriverId(
-			driverId);
-		Optional<DriverOnboardingStep> documentUploadOnboardingStep = driverOnboardingSteps.stream()
-			.filter(driverOnboardingStep -> "Document verification".equals(driverOnboardingStep.getStepName()))
-			.findFirst();
-
-		if (documentUploadOnboardingStep.isEmpty()) {
-			//This isn't possible as long as Driver and satellite audit records are created together.
-			throw new RuntimeException();
-		}
-
-		//If the onboarding process's current step number isn't equal to the step number of document upload step
-		//it means either a prior step is pending, or this step was already completed.
-		if (!documentUploadOnboardingStep.get().getStepNumber()
-			.equals(driverOnboardingProcess.get().getCurrentStepNumber())) {
-			Integer currentStepNumber = driverOnboardingProcess.get().getCurrentStepNumber();
-			DriverOnboardingStep currentlyActiveStep = driverOnboardingSteps.stream()
-				.filter(step -> step.getOnboardingStepTemplateId() == currentStepNumber).findFirst()
-				.get();
-			throw new InvalidStepModificationException(currentlyActiveStep,
-				documentUploadOnboardingStep.get());
-		}
-
-		//If the document upload step's status isn't DriverActionNeeded, then this isn't the driver's turn to upload documents.
-		if (!documentUploadOnboardingStep.get().getStatus().equals(StepStatus.DriverActionNeeded)) {
-			throw new InvalidStepModificationException(
-				documentUploadOnboardingStep.get().getStatus(), StepStatus.DriverActionNeeded);
-		}
-		BudgetEditionS3 aadharFile = new BudgetEditionS3();
-		aadharFile.setFileContent(aadhar.getBytes());
-		aadharFile.setName(aadhar.getName());
-		aadharFile.setOriginalFilename(aadhar.getOriginalFilename());
-
-		BudgetEditionS3 drivingLicenseFile = new BudgetEditionS3();
-		drivingLicenseFile.setFileContent(drivingLicense.getBytes());
-		drivingLicenseFile.setName(drivingLicense.getName());
-		drivingLicenseFile.setOriginalFilename(drivingLicense.getOriginalFilename());
-
-		Map<String, String> dosAttachments = gson.fromJson(
-			documentUploadOnboardingStep.get().getAttachments(), Map.class);
-		Iterable<BudgetEditionS3> uploadedFiles = budgetEditionS3Repository.saveAll(
-			List.of(aadharFile, drivingLicenseFile));
-		Map<String, String> fileNameToFileId = new HashMap<>();
-		uploadedFiles.forEach(file -> {
-			fileNameToFileId.put(file.getName(), file.getOriginalFilename());
-			dosAttachments.put(file.getName(), file.getId().toString());
-		});
-		documentUploadOnboardingStep.get().setStatus(StepStatus.WaitingForAuditorAssignment);
-		documentUploadOnboardingStep.get().setAttachments(gson.toJson(dosAttachments));
-		driverOnboardingStepRepository.save(documentUploadOnboardingStep.get());
-
-		return ResponseEntity.ok(fileNameToFileId);
+		return ResponseEntity.ok(documentNameToFileName);
 	}
 
 	@PatchMapping(path = "{driverId}/status/toggle")
