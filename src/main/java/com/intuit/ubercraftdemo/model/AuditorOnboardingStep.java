@@ -8,9 +8,9 @@ import org.springframework.data.relational.core.mapping.Table;
 @Table(name = "auditor_onboarding_step")
 public class AuditorOnboardingStep {
 
-	@Id
-	private Integer id;
-	private String username;
-	private Integer assignedOnboardingStepId;
-	private String stepName;
+    @Id
+    private Integer id;
+    private String username;
+    private Integer assignedOnboardingStepId;
+    private String stepName;
 }

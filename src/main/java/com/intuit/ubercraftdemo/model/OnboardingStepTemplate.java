@@ -8,11 +8,11 @@ import org.springframework.data.relational.core.mapping.Table;
 @Data
 public class OnboardingStepTemplate {
 
-	@Id
-	private Integer id;
-	private String stepName;
-	private Integer processTemplateId;
-	private StepStatus initialStatus;
-	private String attachments;
-	private Integer sequenceNumber;
+    @Id
+    private Integer id;
+    private String stepName;
+    private Integer processTemplateId;
+    private StepStatus initialStatus;
+    private String attachments;
+    private Integer sequenceNumber;
 }

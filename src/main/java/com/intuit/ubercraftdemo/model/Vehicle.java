@@ -8,16 +8,16 @@ import org.springframework.data.relational.core.mapping.Table;
 @Table(name = "vehicle")
 public class Vehicle {
 
-	@Id
-	private Integer id;
-	private String make;
-	private String model;
-	private Integer year;
-	private VehicleColour colour;
-	private Integer occupancy;
-	private Integer defaultProductCategoryId;
+    @Id
+    private Integer id;
+    private String make;
+    private String model;
+    private Integer year;
+    private VehicleColour colour;
+    private Integer occupancy;
+    private Integer defaultProductCategoryId;
 
-	public enum VehicleColour {
-		Red, White, Black, Grey, Blue
-	}
+    public enum VehicleColour {
+        Red, White, Black, Grey, Blue
+    }
 }

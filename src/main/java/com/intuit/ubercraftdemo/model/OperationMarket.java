@@ -8,10 +8,10 @@ import org.springframework.data.relational.core.mapping.Table;
 @Data
 public class OperationMarket {
 
-	@Id
-	private Integer id;
-	private String country;
-	private String state;
-	private String city;
+    @Id
+    private Integer id;
+    private String country;
+    private String state;
+    private String city;
 
 }

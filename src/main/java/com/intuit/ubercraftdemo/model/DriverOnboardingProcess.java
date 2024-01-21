@@ -8,11 +8,11 @@ import org.springframework.data.relational.core.mapping.Table;
 @Table(name = "driver_onboarding_process")
 public class DriverOnboardingProcess {
 
-	@Id
-	private Integer id;
-	private Integer driverId;
-	private Integer productCategoryId;
-	private String processName;
-	private Integer currentStepNumber;
-	private Integer onboardingProcessTemplateId;
+    @Id
+    private Integer id;
+    private Integer driverId;
+    private Integer productCategoryId;
+    private String processName;
+    private Integer currentStepNumber;
+    private Integer onboardingProcessTemplateId;
 }

@@ -8,12 +8,12 @@ import com.intuit.ubercraftdemo.model.StepStatus;
  */
 public class InvalidStepModificationException extends IllegalStateException {
 
-	public InvalidStepModificationException(DriverOnboardingStep activeStep, DriverOnboardingStep inactiveStep) {
-		super(String.format("%s step is currently disabled, current active step is %s",
-			inactiveStep.getStepName(), activeStep.getStepName()));
-	}
+    public InvalidStepModificationException(DriverOnboardingStep activeStep, DriverOnboardingStep inactiveStep) {
+        super(String.format("%s step is currently disabled, current active step is %s",
+                inactiveStep.getStepName(), activeStep.getStepName()));
+    }
 
-	public InvalidStepModificationException(StepStatus current, StepStatus needed) {
-		super(String.format("Current status is %s, allowed status is %s", current, needed));
-	}
+    public InvalidStepModificationException(StepStatus current, StepStatus needed) {
+        super(String.format("Current status is %s, allowed status is %s", current, needed));
+    }
 }

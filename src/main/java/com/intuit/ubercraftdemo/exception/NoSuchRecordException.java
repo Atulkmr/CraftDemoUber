@@ -5,8 +5,8 @@ package com.intuit.ubercraftdemo.exception;
  */
 public class NoSuchRecordException extends RuntimeException {
 
-	public NoSuchRecordException(String queriedObject) {
-		super(String.format("The specified %s doesn't exist. Please check the request.",
-			queriedObject));
-	}
+    public NoSuchRecordException(String queriedObject) {
+        super(String.format("The specified %s doesn't exist. Please check the request.",
+                queriedObject));
+    }
 }

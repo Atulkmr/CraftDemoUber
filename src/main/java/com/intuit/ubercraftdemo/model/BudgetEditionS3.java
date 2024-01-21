@@ -8,9 +8,9 @@ import org.springframework.data.relational.core.mapping.Table;
 @Data
 public class BudgetEditionS3 {
 
-	@Id
-	private Integer id;
-	private String originalFilename;
-	private String name;
-	private byte[] fileContent;
+    @Id
+    private Integer id;
+    private String originalFilename;
+    private String name;
+    private byte[] fileContent;
 }
