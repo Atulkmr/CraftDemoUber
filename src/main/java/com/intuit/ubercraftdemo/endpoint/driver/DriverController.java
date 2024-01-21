@@ -5,6 +5,7 @@ import com.intuit.ubercraftdemo.DriverMapper;
 import com.intuit.ubercraftdemo.exception.InvalidDriverStatusTransitionException;
 import com.intuit.ubercraftdemo.exception.InvalidFileTypeException;
 import com.intuit.ubercraftdemo.exception.InvalidStepModificationException;
+import com.intuit.ubercraftdemo.exception.NoSuchRecordException;
 import com.intuit.ubercraftdemo.model.BudgetEditionS3;
 import com.intuit.ubercraftdemo.model.Driver;
 import com.intuit.ubercraftdemo.model.Driver.DriverStatus;
@@ -23,6 +24,7 @@ import com.intuit.ubercraftdemo.model.repository.OnboardingProcessTemplateReposi
 import com.intuit.ubercraftdemo.model.repository.OnboardingStepTemplateRepository;
 import com.intuit.ubercraftdemo.model.repository.OperationMarketRepository;
 import com.intuit.ubercraftdemo.model.repository.VehicleRepository;
+import com.intuit.ubercraftdemo.service.RegistrationService;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -48,70 +50,25 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping(path = "/driver")
 @AllArgsConstructor
-@Slf4j
 public class DriverController {
 
 
 	private final Gson gson;
-	private DriverRepository driverRepository;
-	private VehicleRepository vehicleRepository;
-	private OperationMarketRepository operationMarketRepository;
-	private OnboardingProcessTemplateRepository onboardingProcessTemplateRepository;
-	private OnboardingStepTemplateRepository onboardingStepTemplateRepository;
-	private DriverOnboardingStepRepository driverOnboardingStepRepository;
-	private DriverOnboardingProcessRepository driverOnboardingProcessRepository;
-	private BudgetEditionS3Repository budgetEditionS3Repository;
-	private DriverMapper driverMapper;
+	private final DriverRepository driverRepository;
+	private final VehicleRepository vehicleRepository;
+	private final OperationMarketRepository operationMarketRepository;
+	private final OnboardingProcessTemplateRepository onboardingProcessTemplateRepository;
+	private final OnboardingStepTemplateRepository onboardingStepTemplateRepository;
+	private final DriverOnboardingStepRepository driverOnboardingStepRepository;
+	private final DriverOnboardingProcessRepository driverOnboardingProcessRepository;
+	private final BudgetEditionS3Repository budgetEditionS3Repository;
+	private final DriverMapper driverMapper;
+	private final RegistrationService registrationService;
 
 	@PostMapping("/onboard/register")
-	@Transactional
-	public ResponseEntity<Driver> saveEntity(@RequestBody DriverDTO driverRegistration) {
-		log.trace("Beginning of save for Driver record");
-		Optional<Vehicle> vehicle = vehicleRepository.findByMakeModelYearColour(
-			driverRegistration.getVehicle().getMake(), driverRegistration.getVehicle().getModel(),
-			driverRegistration.getVehicle().getYear(), driverRegistration.getVehicle().getColour());
-		//TODO If this car isn't acceptable. Reject
-		Optional<OperationMarket> operationMarket = operationMarketRepository.findByCountryStateCity(
-			driverRegistration.getOperatingCountry(), driverRegistration.getOperatingState(),
-			driverRegistration.getOperatingCity());
-		//TODO If this market isn't available. Reject.
-		Driver driver = driverMapper.toEntity(driverRegistration);
-		driver.setVehicleId(vehicle.get().getId());
-		driver.setOperationMarketId(operationMarket.get().getId());
-		driver = driverRepository.save(driver);
-
-		Optional<OnboardingProcessTemplate> onboardingProcessTemplate = onboardingProcessTemplateRepository.findByOperationMarketIdAndProductCategory(
-			operationMarket.get().getId(), vehicle.get().getDefaultProductCategoryId());
-		List<OnboardingStepTemplate> onboardingStepTemplates = onboardingStepTemplateRepository.findByProcessTemplateId(
-			onboardingProcessTemplate.get().getId());
-
-		DriverOnboardingProcess driverOnboardingProcess = new DriverOnboardingProcess();
-		driverOnboardingProcess.setDriverId(driver.getId());
-		driverOnboardingProcess.setOnboardingProcessTemplateId(
-			onboardingProcessTemplate.get().getId());
-		driverOnboardingProcess.setProductCategoryId(vehicle.get().getDefaultProductCategoryId());
-		driverOnboardingProcess.setProcessName(
-			driver.getUsername() + onboardingProcessTemplate.get().getProcessName());
-		driverOnboardingProcess.setCurrentStepNumber(1);
-		driverOnboardingProcess = driverOnboardingProcessRepository.save(driverOnboardingProcess);
-
-		List<DriverOnboardingStep> driverOnboardingSteps = new ArrayList<>();
-		for (OnboardingStepTemplate onboardingStepTemplate : onboardingStepTemplates) {
-			DriverOnboardingStep driverOnboardingStep = new DriverOnboardingStep();
-			driverOnboardingStep.setDriverId(driver.getId());
-			driverOnboardingStep.setDriverOnboardingProcessId(driverOnboardingProcess.getId());
-			driverOnboardingStep.setStepName(onboardingStepTemplate.getStepName());
-			driverOnboardingStep.setAttachments(onboardingStepTemplate.getAttachments());
-			driverOnboardingStep.setOnboardingStepTemplateId(onboardingStepTemplate.getId());
-			driverOnboardingStep.setStepNumber(onboardingStepTemplate.getSequenceNumber());
-			driverOnboardingStep.setStatus(onboardingStepTemplate.getInitialStatus());
-			driverOnboardingStep.setCreatedDate(new Date());
-			driverOnboardingStep.setLastModifiedDate(new Date());
-			driverOnboardingSteps.add(driverOnboardingStep);
-		}
-		driverOnboardingStepRepository.saveAll(driverOnboardingSteps);
-
-		return ResponseEntity.ok(driver);
+	public ResponseEntity<RegistrationAcknowledgementDTO> registerAsNewDriver(@RequestBody DriverRegistrationDTO driverRegistration) {
+		RegistrationAcknowledgementDTO acknowledgementDTO = registrationService.createNewDriverAndRelatedOnboardingRecords(driverRegistration);
+		return ResponseEntity.ok(acknowledgementDTO);
 	}
 
 
@@ -135,7 +92,7 @@ public class DriverController {
 		List<DriverOnboardingStep> driverOnboardingSteps = driverOnboardingStepRepository.findAllByDriverId(
 			driverId);
 		Optional<DriverOnboardingStep> documentUploadOnboardingStep = driverOnboardingSteps.stream()
-			.filter(driverOnboardingStep -> driverOnboardingStep.getOnboardingStepTemplateId() == 1)
+			.filter(driverOnboardingStep -> "Document verification".equals(driverOnboardingStep.getStepName()))
 			.findFirst();
 
 		if (documentUploadOnboardingStep.isEmpty()) {

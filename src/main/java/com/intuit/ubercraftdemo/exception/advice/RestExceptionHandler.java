@@ -4,6 +4,7 @@ import com.intuit.ubercraftdemo.exception.InvalidDriverStatusTransitionException
 import com.intuit.ubercraftdemo.exception.InvalidFileTypeException;
 import com.intuit.ubercraftdemo.exception.InvalidStepModificationException;
 import com.intuit.ubercraftdemo.exception.NoCaseAssignedException;
+import com.intuit.ubercraftdemo.exception.NoSuchRecordException;
 import java.nio.file.NoSuchFileException;
 import lombok.AllArgsConstructor;
 import org.springframework.boot.autoconfigure.web.servlet.MultipartProperties;
@@ -79,6 +80,14 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 		apiError.setMessage(ex.getMessage());
 		return buildResponseEntity(apiError);
 	}
+
+	@ExceptionHandler(NoSuchRecordException.class)
+	public ResponseEntity<Object> handleNoSuchRecordFoundException(NoSuchRecordException ex) {
+		ApiError apiError = new ApiError(HttpStatus.NOT_FOUND);
+		apiError.setMessage(ex.getMessage());
+		return buildResponseEntity(apiError);
+	}
+
 
 	private ResponseEntity<Object> buildResponseEntity(ApiError apiError) {
 		return new ResponseEntity<>(apiError, apiError.getStatus());

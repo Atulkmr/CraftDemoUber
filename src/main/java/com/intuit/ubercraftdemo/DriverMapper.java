@@ -1,7 +1,7 @@
 package com.intuit.ubercraftdemo;
 
-import com.intuit.ubercraftdemo.endpoint.driver.DriverDTO;
-import com.intuit.ubercraftdemo.endpoint.driver.DriverDTO.VehicleDTO;
+import com.intuit.ubercraftdemo.endpoint.driver.DriverRegistrationDTO;
+import com.intuit.ubercraftdemo.endpoint.driver.DriverRegistrationDTO.VehicleDTO;
 import com.intuit.ubercraftdemo.model.Driver;
 import com.intuit.ubercraftdemo.model.Vehicle;
 import org.mapstruct.Mapper;
@@ -19,7 +19,7 @@ public interface DriverMapper {
 	@Mapping(target = "mailingState", source = "mailingAddress.state")
 	@Mapping(target = "mailingCountry", source = "mailingAddress.country")
 	@Mapping(target = "mailingPostalCode", source = "mailingAddress.postalCode")
-	Driver toEntity(DriverDTO driverDTO);
+	Driver toEntity(DriverRegistrationDTO driverRegistrationDTO);
 
 	Vehicle toEntity(VehicleDTO vehicleDTO);
 
@@ -33,5 +33,5 @@ public interface DriverMapper {
 	@Mapping(source = "mailingState", target = "mailingAddress.state")
 	@Mapping(source = "mailingCountry", target = "mailingAddress.country")
 	@Mapping(source = "mailingPostalCode", target = "mailingAddress.postalCode")
-	DriverDTO toDto(Driver driver);
+	DriverRegistrationDTO toDto(Driver driver);
 }

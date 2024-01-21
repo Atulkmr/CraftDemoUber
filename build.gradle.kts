@@ -26,13 +26,14 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("com.google.code.gson:gson:2.9.0")
-    runtimeOnly("com.google.code.gson:")
+    runtimeOnly("com.google.code.gson:gson:2.9.0")
     compileOnly("org.projectlombok:lombok")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     runtimeOnly("com.mysql:mysql-connector-j")
     annotationProcessor("org.projectlombok:lombok")
     annotationProcessor("org.mapstruct:mapstruct-processor:1.5.5.Final")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("com.google.code.gson:gson:2.9.0")
 }
 
 tasks.withType<Test> {

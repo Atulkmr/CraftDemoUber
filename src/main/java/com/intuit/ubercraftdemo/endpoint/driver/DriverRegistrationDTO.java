@@ -5,7 +5,7 @@ import java.time.LocalDate;
 import lombok.Data;
 
 @Data
-public class DriverDTO {
+public class DriverRegistrationDTO {
 
 	private String username;
 	private String name;
