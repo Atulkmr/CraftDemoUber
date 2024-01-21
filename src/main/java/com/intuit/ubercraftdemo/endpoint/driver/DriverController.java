@@ -67,28 +67,12 @@ public class DriverController {
     }
 
     @PatchMapping(path = "{driverId}/status/toggle")
-    public ResponseEntity<Pair<String, String>> toggleStatus(
+    public ResponseEntity<Map<String, String>> toggleStatus(
             @PathVariable("driverId") Integer driverId) {
 
-        Optional<Driver> driverOptional = driverRepository.findById(driverId);
-        if (driverOptional.isEmpty()) {
-            //This isn't a possible scenario if we obtain the driverId from the auth jwt.
-            // But doing this for good measure.
-            throw new RuntimeException();
-        }
-        Driver driver = driverOptional.get();
-        //If the current status is onboarding, driver's availability status can't be toggled
-        if (DriverStatus.ONBOARDING.equals(driver.getStatus())) {
-            throw new InvalidDriverStatusTransitionException();
-        }
-
-        driver.setStatus(DriverStatus.READY_TO_WORK.equals(driver.getStatus()) ?
-                DriverStatus.WORKING : DriverStatus.READY_TO_WORK);
-        //toggle the status and save the record.
-        driverRepository.save(driver);
-
-        //Return the newly set status as a key-value pair.
-        return ResponseEntity.ok(Pair.of("status", driver.getStatus().toString()));
+        Map<String, String> updatedStatusKeyValue =
+                registrationService.validateAndToggleDriverStatus(driverId);
+        return ResponseEntity.ok(updatedStatusKeyValue);
     }
 
     private void checkForWhitelistedMediaType(List<String> whitelistedFileTypes,

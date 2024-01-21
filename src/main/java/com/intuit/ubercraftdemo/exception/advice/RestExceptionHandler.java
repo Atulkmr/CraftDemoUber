@@ -73,7 +73,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler(InvalidDriverStatusTransitionException.class)
-    public ResponseEntity<Object> handleInvalidDriverStatusTransition(InvalidFileTypeException ex) {
+    public ResponseEntity<Object> handleInvalidDriverStatusTransition(InvalidDriverStatusTransitionException ex) {
         ApiError apiError = new ApiError(HttpStatus.METHOD_NOT_ALLOWED);
         apiError.setMessage(ex.getMessage());
         return buildResponseEntity(apiError);

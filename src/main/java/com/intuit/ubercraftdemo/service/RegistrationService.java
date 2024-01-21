@@ -5,6 +5,7 @@ import com.google.gson.reflect.TypeToken;
 import com.intuit.ubercraftdemo.DriverMapper;
 import com.intuit.ubercraftdemo.endpoint.driver.DriverRegistrationDTO;
 import com.intuit.ubercraftdemo.endpoint.driver.RegistrationAcknowledgementDTO;
+import com.intuit.ubercraftdemo.exception.InvalidDriverStatusTransitionException;
 import com.intuit.ubercraftdemo.exception.InvalidStepModificationException;
 import com.intuit.ubercraftdemo.exception.NoSuchRecordException;
 import com.intuit.ubercraftdemo.model.*;
@@ -38,6 +39,8 @@ public class RegistrationService {
     @Transactional
     public RegistrationAcknowledgementDTO createNewDriverAndRelatedOnboardingRecords(
             DriverRegistrationDTO driverRegistration) {
+        log.debug("Creating New Driver and Related Onboarding Records for {}", driverRegistration.getUsername());
+
         Optional<Vehicle> vehicle = vehicleRepository.findByMakeModelYearColour(
                 driverRegistration.getVehicle().getMake(), driverRegistration.getVehicle().getModel(),
                 driverRegistration.getVehicle().getYear(), driverRegistration.getVehicle().getColour());
@@ -56,6 +59,7 @@ public class RegistrationService {
         driver.setVehicleId(vehicle.get().getId());
         driver.setOperationMarketId(operationMarket.get().getId());
         driver = driverRepository.save(driver);
+        log.info("Driver Record created for {}", driver.getId());
 
         Optional<OnboardingProcessTemplate> onboardingProcessTemplate = onboardingProcessTemplateRepository.findByOperationMarketIdAndProductCategory(
                 operationMarket.get().getId(), vehicle.get().getDefaultProductCategoryId());
@@ -70,6 +74,7 @@ public class RegistrationService {
         driverOnboardingProcess.setProcessName(onboardingProcessTemplate.get().getProcessName());
         driverOnboardingProcess.setCurrentStepNumber(1);
         driverOnboardingProcess = driverOnboardingProcessRepository.save(driverOnboardingProcess);
+        log.info("Driver Onboarding Process Record created for {}", driver.getId());
 
         List<DriverOnboardingStep> driverOnboardingSteps = new ArrayList<>();
         for (OnboardingStepTemplate onboardingStepTemplate : onboardingStepTemplates) {
@@ -78,6 +83,7 @@ public class RegistrationService {
             driverOnboardingSteps.add(driverOnboardingStep);
         }
         driverOnboardingStepRepository.saveAll(driverOnboardingSteps);
+        log.info("Driver Onboarding Steps created for {}", driver.getId());
 
         return new RegistrationAcknowledgementDTO(driverRegistration.getUsername(),
                 driverRegistration.getOperatingCountry(), driverRegistration.getOperatingState(),
@@ -105,6 +111,8 @@ public class RegistrationService {
     public Map<String, String> uploadDocumentsAndUpdateFileIdInOnboardingStep(Integer driverId,
                                                                               MultipartFile... files) throws IOException {
 
+        log.debug("Uploading Documents and Updating File ID in Onboarding Step for Driver Id: {}", driverId);
+
         Optional<DriverOnboardingProcess> driverOnboardingProcess = driverOnboardingProcessRepository.findByDriverId(
                 driverId);
 
@@ -116,6 +124,7 @@ public class RegistrationService {
 
         if (documentUploadOnboardingStep.isEmpty()) {
             //This isn't possible as long as Driver and satellite audit records are created together.
+            log.error("No such Document Upload Onboarding Step for Driver Id: {}", driverId);
             throw new RuntimeException();
         }
 
@@ -127,12 +136,14 @@ public class RegistrationService {
             DriverOnboardingStep currentlyActiveStep = driverOnboardingSteps.stream()
                     .filter(step -> step.getOnboardingStepTemplateId() == currentStepNumber).findFirst()
                     .get();
+            log.error("Invalid Step Modification for Driver Id: {}", driverId);
             throw new InvalidStepModificationException(currentlyActiveStep,
                     documentUploadOnboardingStep.get());
         }
 
         //If the document upload step's status isn't DriverActionNeeded, then this isn't the driver's turn to upload documents.
         if (!documentUploadOnboardingStep.get().getStatus().equals(StepStatus.DriverActionNeeded)) {
+            log.error("Invalid Step Status for Driver Id: {}", driverId);
             throw new InvalidStepModificationException(
                     documentUploadOnboardingStep.get().getStatus(), StepStatus.DriverActionNeeded);
         }
@@ -152,6 +163,7 @@ public class RegistrationService {
 
         Iterable<BudgetEditionS3> uploadedS3Files = budgetEditionS3Repository.saveAll(
                 s3FileRecords);
+        log.info("S3 files uploaded for Driver Id: {}", driverId);
 
         Map<String, String> documentNameToFileName = new HashMap<>();
         uploadedS3Files.forEach(file -> {
@@ -161,6 +173,30 @@ public class RegistrationService {
         documentUploadOnboardingStep.get().setStatus(StepStatus.WaitingForAuditorAssignment);
         documentUploadOnboardingStep.get().setAttachments(gson.toJson(onboardingStepAttachments));
         driverOnboardingStepRepository.save(documentUploadOnboardingStep.get());
+        log.info("Onboarding Step updated for Driver Id: {}", driverId);
+
         return documentNameToFileName;
+    }
+
+    public Map<String, String> validateAndToggleDriverStatus(Integer driverId) {
+        Optional<Driver> driverOptional = driverRepository.findById(driverId);
+        if (driverOptional.isEmpty()) {
+            //This isn't a possible scenario if we obtain the driverId from the auth jwt.
+            // But doing this for good measure.
+            throw new RuntimeException();
+        }
+        Driver driver = driverOptional.get();
+        //If the current status is onboarding, driver's availability status can't be toggled
+        if (Driver.DriverStatus.ONBOARDING.equals(driver.getStatus())) {
+            throw new InvalidDriverStatusTransitionException();
+        }
+
+        driver.setStatus(Driver.DriverStatus.READY_TO_WORK.equals(driver.getStatus()) ?
+                Driver.DriverStatus.WORKING : Driver.DriverStatus.READY_TO_WORK);
+        //toggle the status and save the record.
+        driverRepository.save(driver);
+
+        //Return the newly set status as a key-value pair.
+        return Map.of("status",  driver.getStatus().toString());
     }
 }
